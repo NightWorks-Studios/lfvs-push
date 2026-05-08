@@ -1,6 +1,7 @@
+import {} from '@cordisjs/plugin-database'
 import { Context, Service } from 'cordis'
 import z from 'schemastery'
-import { LfvsVideo, LfvsVideoStat } from '../../lfvs-core/src/index'
+import { LfvsVideo, LfvsVideoStat } from 'lfvs-core'
 import {} from '@cordisjs/plugin-http'
 import FormData from 'form-data'
 
@@ -36,7 +37,7 @@ export class PushService extends Service {
   static inject = ['database', 'lfvs.core', 'http', 'logger']
 
   constructor(ctx: Context, public config: Config) {
-    super(ctx, 'lfvs.push', true)
+    super(ctx, 'lfvs.push')
     Promise.resolve().then(() => this.start())
   }
 
