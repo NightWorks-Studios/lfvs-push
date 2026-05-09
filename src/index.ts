@@ -3,7 +3,6 @@ import { Context, Service } from 'cordis'
 import z from 'schemastery'
 import { LfvsVideo, LfvsVideoStat } from 'lfvs-core'
 import {} from '@cordisjs/plugin-http'
-import FormData from 'form-data'
 
 export interface WebhookConfig {
   url: string
@@ -46,12 +45,20 @@ export class PushService extends Service {
   protected async start() {
     this.ctx.on('lfvs/milestone-reached', async (video: LfvsVideo, milestone: number, newStat: LfvsVideoStat) => {
       if (!this.config.enableMilestonePush) return
-      await this.pushMilestone(video, milestone, newStat)
+      try {
+        await this.pushMilestone(video, milestone, newStat)
+      } catch (e: any) {
+        this.ctx.emit('lfvs/log', 'push', 'error', `推送里程碑失败: ${e.message}`)
+      }
     })
 
     this.ctx.on('lfvs/new-video-found', async (video: LfvsVideo) => {
       if (!this.config.enableNewVideoPush) return
-      await this.pushNewVideo(video)
+      try {
+        await this.pushNewVideo(video)
+      } catch (e: any) {
+        this.ctx.emit('lfvs/log', 'push', 'error', `推送新视频失败: ${e.message}`)
+      }
     })
   }
 
@@ -114,19 +121,28 @@ export class PushService extends Service {
 
     const start = Date.now()
     try {
-      const form = new FormData()
-      form.append('dynamic_id', '0')
-      form.append('type', '4')
-      form.append('rid', '0')
-      form.append('content', content)
-      form.append('csrf_token', creds.csrf)
-      form.append('csrf', creds.csrf)
-      form.append('ctrl', '[]')
-      form.append('at_uids', '')
-      
-      const res = await this.ctx.http.post('https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/create', form, {
-        headers: { ...form.getHeaders(), Cookie: creds.cookie, Origin: 'https://t.bilibili.com', Referer: 'https://t.bilibili.com/' }
-      })
+      const res = await this.ctx.http.post(
+        `https://api.bilibili.com/x/dynamic/feed/create/dyn?csrf=${creds.csrf}`,
+        {
+          dyn_req: {
+            content: {
+              contents: [{ raw_text: content, type: 1, biz_id: '' }]
+            },
+            scene: 1,
+            meta: {
+              app_meta: { from: 'create.dynamic.web', mobi_app: 'web' }
+            }
+          }
+        },
+        {
+          headers: {
+            Cookie: creds.cookie,
+            'Content-Type': 'application/json',
+            Origin: 'https://t.bilibili.com',
+            Referer: 'https://t.bilibili.com/'
+          }
+        }
+      )
 
       const success = res.code === 0
       this.ctx.emit('lfvs/api-request', 'push', 'bilibili-dynamic', '', success, Date.now() - start, success ? undefined : res.message)

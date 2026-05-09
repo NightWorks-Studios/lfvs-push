@@ -4,7 +4,6 @@
   "main": "lib/index.js",
   "dependencies": {
     "@cordisjs/plugin-database": "^4.0.1",
-    "form-data": "^4.0.0",
     "schemastery": "^3.18.0",
     "lfvs-core": "*"
   },
