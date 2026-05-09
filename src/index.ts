@@ -38,7 +38,9 @@ export class PushService extends Service {
 
   constructor(ctx: Context, public config: Config) {
     super(ctx, 'lfvs.push')
-    Promise.resolve().then(() => this.start())
+    Promise.resolve().then(() => this.start().catch(e => {
+      this.ctx.emit('lfvs/log', 'push', 'error', `启动失败: ${e.message}`)
+    }))
   }
 
   protected async start() {
