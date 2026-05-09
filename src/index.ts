@@ -144,7 +144,8 @@ export class PushService extends Service {
       if (!hook.url) continue
       const start = Date.now()
       try {
-        const bodyStr = hook.bodyTemplate.replace(/\{\{content\}\}/g, content)
+        const escapedContent = JSON.stringify(content).slice(1, -1)
+        const bodyStr = hook.bodyTemplate.replace(/\{\{content\}\}/g, () => escapedContent)
         
         if (hook.method === 'POST') {
           let data: any = bodyStr
