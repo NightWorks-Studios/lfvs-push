@@ -43,10 +43,10 @@ export class PushService extends Service {
   }
 
   protected async start() {
-    this.ctx.on('lfvs/milestone-reached', async (video: LfvsVideo, milestone: number, newStat: LfvsVideoStat) => {
+    this.ctx.on('lfvs/milestone-reached', async (video: LfvsVideo, milestone: number, oldStat: LfvsVideoStat, newStat: LfvsVideoStat) => {
       if (!this.config.enableMilestonePush) return
       try {
-        await this.pushMilestone(video, milestone, newStat)
+        await this.pushMilestone(video, milestone, oldStat, newStat)
       } catch (e: any) {
         this.ctx.emit('lfvs/log', 'push', 'error', `推送里程碑失败: ${e.message}`)
       }
@@ -67,7 +67,7 @@ export class PushService extends Service {
     return res[0]?.name || '未知UP主'
   }
 
-  private async pushMilestone(video: LfvsVideo, milestone: number, newStat: LfvsVideoStat) {
+  private async pushMilestone(video: LfvsVideo, milestone: number, oldStat: LfvsVideoStat, newStat: LfvsVideoStat) {
     const uploaderName = await this.getUploaderName(video.uploaderId)
     const formattedMilestone = milestone >= 10000 ? `${milestone / 10000}万` : milestone.toString()
     
@@ -76,7 +76,7 @@ export class PushService extends Service {
     content += `所属：${uploaderName} (${video.platform})\n`
     content += `播放量已突破 ${formattedMilestone}！\n\n`
     content += `当前数据：\n`
-    content += `👁️ 播放：${newStat.view}\n`
+    content += `👁️ 播放：${newStat.view} (+${newStat.view - oldStat.view})\n`
     content += `👍 点赞：${newStat.like}\n`
     content += `⭐ 收藏：${newStat.favorite}\n`
     content += `币 硬币：${newStat.coin}\n`
