@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "lib/index.js",
   "dependencies": {
-    "@cordisjs/plugin-database": "^4.0.1",
+    "@cordisjs/plugin-database": "^4.1.0",
     "schemastery": "^3.18.0",
     "lfvs-core": "*"
   },
